@@ -7,6 +7,7 @@ Ship::Ship(RenderWindow* gameWindow, Vector2f shipDimensions)
 	window = gameWindow;
 	speed = BeginningSpeed;
 	dimensions = shipDimensions;
+	gameObjectType = ship;
 	lives = 3;
 	shape.setSize(dimensions - sf::Vector2f(3, 3));
 	shape.setOutlineThickness(3);
@@ -15,6 +16,7 @@ Ship::Ship(RenderWindow* gameWindow, Vector2f shipDimensions)
 	shape.setOrigin(dimensions / 2.f);
 	shape.setPosition(defaultPosition);
 	shape.setRotation(90);
+	deleteNextCycle = false;
 }
 
 void Ship::Update(float dt)
@@ -47,6 +49,13 @@ void Ship::Draw()
 void Ship::HandleCollision(GameObject* collider)
 {
 
+}
+
+void Ship::Damage()
+{
+	lives--;
+	position = defaultPosition;
+	shape.setPosition(defaultPosition);
 }
 
 Ship::~Ship()

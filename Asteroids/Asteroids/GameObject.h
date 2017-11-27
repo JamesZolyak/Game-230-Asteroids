@@ -12,7 +12,10 @@ using namespace sf;
 class GameObject
 {
 public:
-
+	enum Type { bullet, ship, asteroid };
+	enum Size { large, medium, tiny };
+	Type gameObjectType;
+	Size gameObjectSize;
 	RenderWindow* window;
 	RectangleShape shape;
 	Vector2f position;
@@ -20,7 +23,7 @@ public:
 	Vector2f dimensions;
 	int angle;
 	int speed;
-	const float gravity = 9.8f;
+	bool deleteNextCycle = false;
 
 	GameObject();
 	virtual void Update(float dt) = 0;

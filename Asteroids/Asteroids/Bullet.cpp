@@ -9,10 +9,12 @@ Bullet::Bullet(RenderWindow* gameWindow, Vector2f bulletDimensions, int bulletAn
 	angle = bulletAngle;
 	shape.rotate(angle);
 	dimensions = bulletDimensions;
+	gameObjectType = bullet;
 	shape.setSize(dimensions - sf::Vector2f(3, 3));
 	shape.setFillColor(sf::Color::Red);
 	shape.setOrigin(dimensions / 2.f);
 	//shape.setRotation(90);
+	deleteNextCycle = false;
 }
 
 void Bullet::Update(float dt)

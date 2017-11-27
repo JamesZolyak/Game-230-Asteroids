@@ -1,10 +1,7 @@
 #pragma once
 #include "GameObject.h"
 
-using namespace sf;
-
-class Bullet :
-	public GameObject
+class Bullet : public GameObject
 {
 public:
 

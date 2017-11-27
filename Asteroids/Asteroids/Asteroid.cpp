@@ -7,11 +7,14 @@ Asteroid::Asteroid(RenderWindow* gameWindow, Vector2f asteroidDimensions, int mo
 	window = gameWindow;
 	angle = movementAngle;
 	dimensions = asteroidDimensions;
-	speed = 100;
+	speed = 40;
+	gameObjectType = asteroid;
+	gameObjectSize = large;
 	shape.setSize(dimensions - sf::Vector2f(3, 3));
 	shape.setFillColor(sf::Color::White);
 	shape.setOrigin(dimensions / 2.f);
 	shape.setRotation(angle);
+	deleteNextCycle = false;
 }
 
 void Asteroid::Update(float dt)
@@ -30,17 +33,13 @@ void Asteroid::Draw()
 
 void Asteroid::HandleCollision(GameObject* collider)
 {
-	if (dynamic_cast<Ship*>(collider) != nullptr)
+	if (collider->gameObjectType == Type::ship)
 	{
-		dynamic_cast<Ship*>(collider)->lives--;
+		dynamic_cast<Ship*>(collider)->Damage();
 	}
-	else if (dynamic_cast<Bullet*>(collider) != nullptr)
+	else if (collider->gameObjectType == Type::asteroid)
 	{
-
-	}
-	else if (dynamic_cast<Asteroid*>(collider) != nullptr)
-	{
-		Vector2f temp = position - dynamic_cast<Asteroid*>(collider)->position;
+		Vector2f temp = position - collider->position;
 		float angle = atan2f(temp.y, temp.x);
 		int ballAngle = angle;
 		
@@ -48,54 +47,50 @@ void Asteroid::HandleCollision(GameObject* collider)
 		c.x = cosf(shape.getRotation());
 		c.y = sinf(shape.getRotation());
 		int tempAngle = atan2f(c.y, -c.x);
-
-		//shape.setRotation(tempAngle);
-		//angle = shape.getRotation();
-
 		
 		Vector2f d;
-		d.x = cosf(dynamic_cast<Asteroid*>(collider)->shape.getRotation());
-		d.y = sinf(dynamic_cast<Asteroid*>(collider)->shape.getRotation());
+		d.x = cosf(collider->shape.getRotation());
+		d.y = sinf(collider->shape.getRotation());
 		int tempAngle2 = atan2f(d.y, -d.x);
-
-		//dynamic_cast<Asteroid*>(collider)->shape.setRotation(tempAngle2);
-		//dynamic_cast<Asteroid*>(collider)->angle = dynamic_cast<Asteroid*>(collider)->shape.getRotation();
 		
-		if (this->position.x > dynamic_cast<Asteroid*>(collider)->position.x)
+		if (this->position.x > collider->position.x)
 		{
 			tempAngle += 90;
 			tempAngle2 -= 90;
-			if (this->position.y > dynamic_cast<Asteroid*>(collider)->position.y)
+			if (this->position.y > collider->position.y)
 			{
 				position = Vector2f(position.x + 5, position.y + 5);
-				dynamic_cast<Asteroid*>(collider)->position = Vector2f(dynamic_cast<Asteroid*>(collider)->position.x - 5, dynamic_cast<Asteroid*>(collider)->position.y - 5);
+				collider->position = Vector2f(collider->position.x - 5, collider->position.y - 5);
 			}
 			else if (this->position.y < dynamic_cast<Asteroid*>(collider)->position.y)
 			{
 				position = Vector2f(position.x + 5, position.y - 5);
-				dynamic_cast<Asteroid*>(collider)->position = Vector2f(dynamic_cast<Asteroid*>(collider)->position.x - 5, dynamic_cast<Asteroid*>(collider)->position.y + 5);
+				collider->position = Vector2f(collider->position.x - 5, collider->position.y + 5);
 			}
 		}
-		else if (this->position.x < dynamic_cast<Asteroid*>(collider)->position.x) 
+		else if (this->position.x < collider->position.x)
 		{
 			tempAngle -= 90;
 			tempAngle2 += 90;
-			if (this->position.y > dynamic_cast<Asteroid*>(collider)->position.y)
+			if (this->position.y > collider->position.y)
 			{
 				position = Vector2f(position.x - 5, position.y + 5);
-				dynamic_cast<Asteroid*>(collider)->position = Vector2f(dynamic_cast<Asteroid*>(collider)->position.x + 5, dynamic_cast<Asteroid*>(collider)->position.y - 5);
+				collider->position = Vector2f(collider->position.x + 5, collider->position.y - 5);
 
 			}
-			else if (this->position.y < dynamic_cast<Asteroid*>(collider)->position.y)
+			else if (this->position.y < collider->position.y)
 			{
 				position = Vector2f(position.x - 5, position.y - 5);
-				dynamic_cast<Asteroid*>(collider)->position = Vector2f(dynamic_cast<Asteroid*>(collider)->position.x + 5, dynamic_cast<Asteroid*>(collider)->position.y + 5);
+				collider->position = Vector2f(collider->position.x + 5, collider->position.y + 5);
 			}
 		}
 		shape.rotate(tempAngle);
-		dynamic_cast<Asteroid*>(collider)->shape.rotate(tempAngle2);
-		
-		
+		collider->shape.rotate(tempAngle2);
+	}
+	else if (collider->gameObjectType == Type::bullet)
+	{
+		deleteNextCycle = true;
+		collider->deleteNextCycle = true;
 	}
 }
 

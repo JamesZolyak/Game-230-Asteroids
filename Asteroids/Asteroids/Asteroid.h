@@ -7,8 +7,6 @@ class Asteroid : public GameObject
 {
 public:
 
-	int radius;
-
 	Asteroid(RenderWindow* gameWindow, Vector2f asteroidDimensions, int movementAngle);
 	virtual void Update(float dt);
 	virtual void Draw();

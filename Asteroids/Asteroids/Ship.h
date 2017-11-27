@@ -16,6 +16,7 @@ public:
 	virtual void Update(float dt);
 	virtual void Draw();
 	virtual void HandleCollision(GameObject* collider);
+	void Damage();
 	~Ship();
 };
 

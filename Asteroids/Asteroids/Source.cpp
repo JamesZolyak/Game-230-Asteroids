@@ -21,8 +21,10 @@ Text playerLivesText;
 Ship* player;
 vector<GameObject*> objects;
 bool isPlaying = false;
+float fireLimiter = 5;
 const int startingBigAsteroidCount = 4;
 int bigAsteroidCount;
+const int bigAsteroidSize = 100;
 
 void update_state(float dt)
 {
@@ -57,8 +59,9 @@ void handleScreenWrap()
 
 void handleFiring()
 {
-	if (Keyboard::isKeyPressed(Keyboard::Space))
+	if (Keyboard::isKeyPressed(Keyboard::Space) && fireLimiter >= 1)
 	{
+		fireLimiter = 0;
 		Bullet* bullet = new Bullet(&window, Vector2f(25, 10), player->shape.getRotation());
 		bullet->position = player->shape.getPosition();
 		objects.push_back(bullet);
@@ -71,18 +74,57 @@ void handleCollision()
 	{
 		for (int j = 0; j < objects.size(); ++j)
 		{
-			if (objects[i] == objects[j])
-			{
-
-			}/*ball.getGlobalBounds().intersects(player.paddle.getGlobalBounds()*/
-			else if(objects[i]->shape.getGlobalBounds().intersects(objects[j]->shape.getGlobalBounds()))
-			{
-				objects[j]->HandleCollision(objects[i]);
-			}
-			objects[i]->Draw();
+			if(objects[i]->shape.getGlobalBounds().intersects(objects[j]->shape.getGlobalBounds()) && objects[i] != objects[j])
+				objects[i]->HandleCollision(objects[j]);
 		}
 	}
+	for (int i = 0; i < objects.size(); ++i)
+	{
+		if (objects[i]->deleteNextCycle)
+		{
+			if (objects[i]->gameObjectType == GameObject::Type::asteroid)
+			{
+
+				int angle1 = rand() % 361;
+				int angle2 = rand() % 361;
+				Asteroid* temp1 = new Asteroid(&window, Vector2f(objects[i]->shape.getSize().x / 2, objects[i]->shape.getSize().y / 2), angle1);
+				Asteroid* temp2 = new Asteroid(&window, Vector2f(objects[i]->shape.getSize().x / 2, objects[i]->shape.getSize().y / 2), angle2);
+				if (objects[i]->gameObjectSize == GameObject::Size::large)
+				{
+					temp1->gameObjectSize = GameObject::Size::medium;
+					temp2->gameObjectSize = GameObject::Size::medium;
+					temp1->speed += 50;
+					temp2->speed += 50;
+					objects.push_back(temp1);
+					objects.push_back(temp2);
+				}
+				if (objects[i]->gameObjectSize == GameObject::Size::medium)
+				{
+					temp1->gameObjectSize = GameObject::Size::tiny;
+					temp2->gameObjectSize = GameObject::Size::tiny;
+					temp1->speed += 50;
+					temp2->speed += 50;
+					objects.push_back(temp1);
+					objects.push_back(temp2);
+				}
+				if (objects[i]->gameObjectSize == GameObject::Size::tiny)
+				{
+				}
+				objects.erase(objects.begin() + i);
+				//delete objects[i];
+				//objects[i] = nullptr;
+				
+			}
+			else if (objects[i]->gameObjectType == GameObject::Type::bullet)
+			{
+				objects.erase(objects.begin() + i);
+			}
+		}
+	}
+
 }
+
+
 
 int main()
 {
@@ -102,7 +144,7 @@ int main()
 		int angle = rand() % 361;
 		int xPosition = rand() % 801;
 		int yPosition = rand() % 601;
-		Asteroid* temp = new Asteroid(&window, Vector2f(100, 100), angle);
+		Asteroid* temp = new Asteroid(&window, Vector2f(bigAsteroidSize, bigAsteroidSize), angle);
 		temp->position = Vector2f(xPosition, yPosition);
 		objects.push_back(temp);
 	}
@@ -112,7 +154,7 @@ int main()
 	playerLivesText.setPosition(660.f, 520.f);
 	playerLivesText.setFillColor(Color::White);
 	//playerLivesText.setString("Lives: " + to_string(player->lives));
-	playerLivesText.setString(to_string(objects[1]->angle));
+	//playerLivesText.setString(to_string(objects[1]->angle));
 
 
 	while (window.isOpen())
@@ -130,14 +172,15 @@ int main()
 				window.close();
 		}
 		float deltaTime = clock.restart().asSeconds();
+		fireLimiter += deltaTime;
 		window.clear();
 		update_state(deltaTime);
 		handleScreenWrap();
 		handleFiring();
 		handleCollision();
 		render_frame();
-		playerLivesText.setString(to_string(objects[1]->angle));
-		window.draw(playerLivesText);
+		//playerLivesText.setString(to_string(objects[1]->angle));
+		//window.draw(playerLivesText);
 		//window.draw(shape);
 		window.display();
 	}
