@@ -31,7 +31,7 @@ void Bullet::Draw()
 	window->draw(shape);
 }
 
-void Bullet::HandleCollision(GameObject* collider)
+void Bullet::HandleCollision(GameObject* collider, Sound* shipExplosion)
 {
 
 }

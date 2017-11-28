@@ -7,7 +7,7 @@ Asteroid::Asteroid(RenderWindow* gameWindow, Vector2f asteroidDimensions, int mo
 	window = gameWindow;
 	angle = movementAngle;
 	dimensions = asteroidDimensions;
-	speed = 40;
+	speed = 20;
 	gameObjectType = asteroid;
 	gameObjectSize = large;
 	shape.setSize(dimensions - sf::Vector2f(3, 3));
@@ -31,11 +31,12 @@ void Asteroid::Draw()
 	window->draw(shape);
 }
 
-void Asteroid::HandleCollision(GameObject* collider)
+void Asteroid::HandleCollision(GameObject* collider, Sound* shipExplosion)
 {
 	if (collider->gameObjectType == Type::ship)
 	{
 		dynamic_cast<Ship*>(collider)->Damage();
+		shipExplosion->play();
 	}
 	else if (collider->gameObjectType == Type::asteroid)
 	{

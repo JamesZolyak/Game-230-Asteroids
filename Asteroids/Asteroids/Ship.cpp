@@ -2,13 +2,14 @@
 
 using namespace sf;
 
-Ship::Ship(RenderWindow* gameWindow, Vector2f shipDimensions)
+Ship::Ship(RenderWindow* gameWindow, Vector2f shipDimensions, Sound* shipThruster)
 {
 	window = gameWindow;
 	speed = BeginningSpeed;
 	dimensions = shipDimensions;
 	gameObjectType = ship;
 	lives = 3;
+	shipMovement = *shipThruster;
 	shape.setSize(dimensions - sf::Vector2f(3, 3));
 	shape.setOutlineThickness(3);
 	shape.setOutlineColor(sf::Color::Black);
@@ -31,6 +32,8 @@ void Ship::Update(float dt)
 	{
 		velocity.y = sin((3.14f / 180)*shape.getRotation()) * dt * speed;
 		velocity.x = cos((3.14f / 180)*shape.getRotation())* dt * speed;
+		if (shipMovement.getStatus() == Sound::Status::Stopped)
+			shipMovement.play();
 	}
 	if(velocity.x > 0)
 		velocity.x -= .00001;
@@ -46,7 +49,7 @@ void Ship::Draw()
 	window->draw(shape);
 }
 
-void Ship::HandleCollision(GameObject* collider)
+void Ship::HandleCollision(GameObject* collider, Sound* shipExplosion)
 {
 
 }
@@ -56,6 +59,8 @@ void Ship::Damage()
 	lives--;
 	position = defaultPosition;
 	shape.setPosition(defaultPosition);
+	velocity.x = 0;
+	velocity.y = 0;
 }
 
 Ship::~Ship()

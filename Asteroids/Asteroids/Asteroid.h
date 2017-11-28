@@ -10,7 +10,7 @@ public:
 	Asteroid(RenderWindow* gameWindow, Vector2f asteroidDimensions, int movementAngle);
 	virtual void Update(float dt);
 	virtual void Draw();
-	virtual void HandleCollision(GameObject* collider);
+	virtual void HandleCollision(GameObject* collider, Sound* shipExplosion);
 	~Asteroid();
 };
 

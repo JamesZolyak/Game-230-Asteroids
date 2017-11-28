@@ -11,11 +11,12 @@ private:
 public:
 	
 	int lives;
+	Sound shipMovement;
 
-	Ship(RenderWindow* gameWindow, Vector2f dimensions);
+	Ship(RenderWindow* gameWindow, Vector2f dimensions, Sound* shipThruster);
 	virtual void Update(float dt);
 	virtual void Draw();
-	virtual void HandleCollision(GameObject* collider);
+	virtual void HandleCollision(GameObject* collider, Sound* shipExplosion);
 	void Damage();
 	~Ship();
 };
