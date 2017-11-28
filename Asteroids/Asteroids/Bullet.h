@@ -9,6 +9,14 @@ public:
 	virtual void Update(float dt);
 	virtual void Draw();
 	virtual void HandleCollision(GameObject* collider, Sound* shipExplosion);
+	virtual int getRenderBucket()
+	{
+		return 2;
+	}
+	virtual Vector2f getCenter()
+	{
+		return position;
+	}
 	~Bullet();
 };
 

@@ -13,14 +13,20 @@
 using namespace sf;
 using namespace std;
 
-const int gameWidth = 800;
-const int gameHeight = 600;
+const int gameWidth = 1000;
+const int gameHeight = 1000;
+const float BUCKET_WIDTH = 100;
+const float BUCKET_HEIGHT = 100;
+const int COLUMNS = 10;
+const int ROWS = 10;
+vector<GameObject*> grid[COLUMNS][ROWS];
 
 RenderWindow window(VideoMode(gameWidth, gameHeight), "Asteroids!");
 Text playerLivesText;
 Text playerScoreText;
 Ship* player;
 vector<GameObject*> objects;
+vector<GameObject*> buckets[5];
 
 bool isPlaying = false;
 float fireLimiter = -100;
@@ -47,6 +53,13 @@ SoundBuffer shipExplosionBuffer;
 
 Sound asteroidHit;
 SoundBuffer asteroidHitBuffer;
+
+void addGameObject(GameObject* obj)
+{
+	objects.push_back(obj);
+	int i = obj->getRenderBucket();
+	buckets[i].push_back(obj);
+}
 
 void loadSounds()
 {
@@ -85,11 +98,83 @@ void resetScore()
 	score = 0;
 }
 
+Vector2i getBucket(Vector2f pos)
+{
+	int col = int(pos.x / BUCKET_WIDTH);
+	if (col < 0)
+		col = 0;
+	else if (col >= COLUMNS)
+		col = COLUMNS - 1;
+
+	int row = int(pos.y / BUCKET_HEIGHT);
+	if (row < 0)
+		row = 0;
+	else if (row >= ROWS)
+		row = ROWS - 1;
+
+	return Vector2i(col, row);
+}
+
+void bucket_add(Vector2i b, GameObject* obj)
+{
+	vector<GameObject*> & v = grid[b.x][ b.y];
+
+	v.push_back(obj);
+}
+
+void bucket_remove(Vector2i b, GameObject* obj)
+{
+	vector<GameObject*> & v = grid[b.x][ b.y];
+
+	for (int i = 0; i < v.size(); ++i)
+	{
+		if (v[i] == obj)
+		{
+			v.erase(v.begin() + i);
+			break;
+		}
+	}
+}
+
+void detect_collisions(GameObject* obj, Vector2i b)
+{
+	int left = max(b.x - 1, 0);
+	int right = min(b.x + 1, COLUMNS - 1);
+	int top = max(b.y - 1, 0);
+	int bot = min(b.y + 1, ROWS - 1);
+
+	for (int bx = left; bx <= right; ++bx)
+	{
+		for (int by = top; by <= bot; ++by)
+		{
+			vector<GameObject*> & v = grid[bx][ by];
+			for (GameObject* o : v)
+			{
+				if (o != obj)
+					obj->HandleCollision(o, &shipExplosion);
+			}
+		}
+	}
+}
+
+
+
 void update_state(float dt)
 {
 	for(int i = 0; i < objects.size(); ++i)
 	{
-		objects[i]->Update(dt);
+		//objects[i]->Update(dt);
+		GameObject * obj = objects[i];
+		Vector2i curBucket = getBucket(obj->getCenter());
+		obj->Update(dt);
+		Vector2i newBucket = getBucket(obj->getCenter());
+		if (curBucket != newBucket)
+		{
+			bucket_remove(curBucket, obj);
+			bucket_add(newBucket, obj);
+		}
+		detect_collisions(obj, newBucket);
+
 	}
 }
 
@@ -123,7 +208,7 @@ void handleFiring()
 		fireLimiter = 0;
 		Bullet* bullet = new Bullet(&window, Vector2f(20, 5), player->shape.getRotation());
 		bullet->position = player->shape.getPosition();
-		objects.push_back(bullet);
+		addGameObject(bullet);
 		shipFire.play();
 	}
 	else if (Keyboard::isKeyPressed(Keyboard::Space) && currentState == GameState::inGame && ignoreFirstFrame)
@@ -133,16 +218,8 @@ void handleFiring()
 	}
 }
 
-void handleCollision()
+void handleDeleteCycle()
 {
-	for (int i = 0; i < objects.size(); ++i)
-	{
-		for (int j = 0; j < objects.size(); ++j)
-		{
-			if(objects[i]->shape.getGlobalBounds().intersects(objects[j]->shape.getGlobalBounds()) && objects[i] != objects[j])
-				objects[i]->HandleCollision(objects[j], &shipExplosion);
-		}
-	}
 	for (int i = 0; i < objects.size(); ++i)
 	{
 		if (objects[i]->deleteNextCycle)
@@ -160,8 +237,8 @@ void handleCollision()
 					temp2->gameObjectSize = GameObject::Size::medium;
 					temp1->speed = objects[i]->speed + 50;
 					temp2->speed = objects[i]->speed + 50;
-					objects.push_back(temp1);
-					objects.push_back(temp2);
+					addGameObject(temp1);
+					addGameObject(temp2);
 					score += 10;
 				}
 				else if (objects[i]->gameObjectSize == GameObject::Size::medium)
@@ -170,8 +247,8 @@ void handleCollision()
 					temp2->gameObjectSize = GameObject::Size::tiny;
 					temp1->speed = objects[i]->speed + 50;
 					temp2->speed = objects[i]->speed + 50;
-					objects.push_back(temp1);
-					objects.push_back(temp2);
+					addGameObject(temp1);
+					addGameObject(temp2);
 					score += 50;
 				}
 				else if (objects[i]->gameObjectSize == GameObject::Size::tiny)
@@ -180,8 +257,8 @@ void handleCollision()
 				}
 				asteroidHit.play();
 				asteroidTrackerCount++;
-				
-				objects.erase(objects.begin() + i);				
+
+				objects.erase(objects.begin() + i);
 			}
 			else if (objects[i]->gameObjectType == GameObject::Type::bullet)
 			{
@@ -200,12 +277,12 @@ void generateLevel()
 	for (int i = 0; i < bigAsteroidCount; ++i)
 	{
 		int angle = rand() % 361;
-		int xPosition = rand() % 801;
-		int yPosition = rand() % 601;
+		int xPosition = rand() % (gameWidth + 1);
+		int yPosition = rand() % (gameHeight + 1);
 		Asteroid* temp = new Asteroid(&window, Vector2f(bigAsteroidSize, bigAsteroidSize), angle);
 		temp->position = Vector2f(xPosition, yPosition);
 		temp->speed += bigAsteroidSpeedIncrement;
-		objects.push_back(temp);
+		addGameObject(temp);
 	}
 }
 
@@ -215,7 +292,7 @@ void startGame()
 	{
 		player = new Ship(&window, Vector2f(30, 12.5), &shipThruster);
 		player->position = Vector2f(gameWidth/2, gameHeight/2);
-		objects.push_back(player);
+		addGameObject(player);
 		generateLevel();
 		currentState = GameState::inGame;
 		fireLimiter += 2;
@@ -261,12 +338,12 @@ int main()
 
 	playerLivesText.setFont(font);
 	playerLivesText.setCharacterSize(40);
-	playerLivesText.setPosition(660.f, 520.f);
+	playerLivesText.setPosition(gameWidth-160, gameHeight-80);
 	playerLivesText.setFillColor(Color::White);
 
 	playerScoreText.setFont(font);
 	playerScoreText.setCharacterSize(40);
-	playerScoreText.setPosition(60.f, 520);
+	playerScoreText.setPosition(0+60, gameHeight - 80);
 	playerScoreText.setFillColor(Color::White);
 	
 
@@ -305,9 +382,9 @@ int main()
 			fireLimiter += deltaTime;
 
 			update_state(deltaTime);
+			handleDeleteCycle();
 			handleScreenWrap();
 			handleFiring();
-			handleCollision();
 			returnToMainMenu();
 			playerScoreText.setString("Score: " + to_string(score));
 			playerLivesText.setString("Lives: " + to_string(player->lives));

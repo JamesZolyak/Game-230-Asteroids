@@ -33,7 +33,14 @@ void Bullet::Draw()
 
 void Bullet::HandleCollision(GameObject* collider, Sound* shipExplosion)
 {
-
+	/*if (shape.getGlobalBounds().intersects(collider->shape.getGlobalBounds()))
+	{
+		if (collider->gameObjectType == Type::asteroid)
+		{
+			deleteNextCycle = true;
+			collider->deleteNextCycle = true;
+		}
+	}*/
 }
 
 Bullet::~Bullet()

@@ -6,7 +6,7 @@ class Ship :
 {
 private:
 	const int BeginningSpeed = 200;
-	const Vector2f defaultPosition = Vector2f(400, 300);
+	const Vector2f defaultPosition = Vector2f(500, 500);
 
 public:
 	
@@ -17,6 +17,14 @@ public:
 	virtual void Update(float dt);
 	virtual void Draw();
 	virtual void HandleCollision(GameObject* collider, Sound* shipExplosion);
+	virtual int getRenderBucket()
+	{
+		return 1;
+	}
+	virtual Vector2f getCenter()
+	{
+		return position;
+	}
 	void Damage();
 	~Ship();
 };

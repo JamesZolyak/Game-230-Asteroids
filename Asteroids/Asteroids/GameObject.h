@@ -29,6 +29,8 @@ public:
 	virtual void Update(float dt) = 0;
 	virtual void Draw() = 0;
 	virtual void HandleCollision(GameObject* collider, Sound* shipExplosion) = 0;
+	virtual int getRenderBucket() = 0;
+	virtual Vector2f getCenter() = 0;
 	float Length();
 	Vector2f Normalize();
 	~GameObject();

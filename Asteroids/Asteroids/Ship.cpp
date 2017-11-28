@@ -51,7 +51,14 @@ void Ship::Draw()
 
 void Ship::HandleCollision(GameObject* collider, Sound* shipExplosion)
 {
-
+	/*if (shape.getGlobalBounds().intersects(collider->shape.getGlobalBounds()))
+	{
+		if (collider->gameObjectType == Type::asteroid)
+		{
+			dynamic_cast<Ship*>(collider)->Damage();
+			shipExplosion->play();
+		}
+	}*/
 }
 
 void Ship::Damage()
