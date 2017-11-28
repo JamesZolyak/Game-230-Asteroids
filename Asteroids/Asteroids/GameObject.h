@@ -18,6 +18,7 @@ public:
 	Size gameObjectSize;
 	RenderWindow* window;
 	RectangleShape shape;
+	CircleShape circle;
 	Vector2f position;
 	Vector2f velocity;
 	Vector2f dimensions;

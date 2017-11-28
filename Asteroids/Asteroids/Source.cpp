@@ -54,6 +54,9 @@ SoundBuffer shipExplosionBuffer;
 Sound asteroidHit;
 SoundBuffer asteroidHitBuffer;
 
+Sound newLevel;
+SoundBuffer newLevelBuffer;
+
 void addGameObject(GameObject* obj)
 {
 	objects.push_back(obj);
@@ -74,6 +77,9 @@ void loadSounds()
 
 	asteroidHitBuffer.loadFromFile("AsteroidHit.wav");
 	asteroidHit.setBuffer(asteroidHitBuffer);
+
+	newLevelBuffer.loadFromFile("NewLevel.wav");
+	newLevel.setBuffer(newLevelBuffer);
 }
 
 void setStartingAsteroidLevel()
@@ -91,6 +97,7 @@ void clearObjectList()
 	objects.clear();
 	bigAsteroidCount = startingBigAsteroidCount;
 	bigAsteroidSpeedIncrement = 0;
+	ignoreFirstFrame = true;
 }
 
 void resetScore()
@@ -163,7 +170,6 @@ void update_state(float dt)
 {
 	for(int i = 0; i < objects.size(); ++i)
 	{
-		//objects[i]->Update(dt);
 		GameObject * obj = objects[i];
 		Vector2i curBucket = getBucket(obj->getCenter());
 		obj->Update(dt);
@@ -227,10 +233,16 @@ void handleDeleteCycle()
 			if (objects[i]->gameObjectType == GameObject::Type::asteroid)
 			{
 
+				int tempX = objects[i]->position.x;
+				int tempY = objects[i]->position.y;
 				int angle1 = rand() % 361;
 				int angle2 = rand() % 361;
+				Vector2f tempPosition1 = Vector2f(tempX + 75, tempY + 75);
+				Vector2f tempPosition2 = Vector2f(tempX - 75, tempY - 75);
 				Asteroid* temp1 = new Asteroid(&window, Vector2f(objects[i]->shape.getSize().x / 2, objects[i]->shape.getSize().y / 2), angle1);
 				Asteroid* temp2 = new Asteroid(&window, Vector2f(objects[i]->shape.getSize().x / 2, objects[i]->shape.getSize().y / 2), angle2);
+				temp1->position = tempPosition1;
+				temp2->position = tempPosition2;
 				if (objects[i]->gameObjectSize == GameObject::Size::large)
 				{
 					temp1->gameObjectSize = GameObject::Size::medium;
@@ -251,6 +263,7 @@ void handleDeleteCycle()
 					addGameObject(temp2);
 					score += 50;
 				}
+
 				else if (objects[i]->gameObjectSize == GameObject::Size::tiny)
 				{
 					score += 100;
@@ -386,6 +399,7 @@ int main()
 			handleScreenWrap();
 			handleFiring();
 			returnToMainMenu();
+			handleGameOver();
 			playerScoreText.setString("Score: " + to_string(score));
 			playerLivesText.setString("Lives: " + to_string(player->lives));
 			window.draw(playerScoreText);
@@ -396,12 +410,21 @@ int main()
 			if (startingAsteroidLevel == asteroidTrackerCount)
 			{
 				generateLevel();
+				newLevel.play();
 			}
+
 		}
 		else if (currentState == GameState::gameOver)
 		{
-			
+			handleQuit();
+			Text gameOverText;
+			gameOverText.setFont(font);
+			gameOverText.setCharacterSize(40);
+			gameOverText.setPosition(220, 200);
+			gameOverText.setFillColor(Color::White);
+			gameOverText.setString("You Lose!\n Press Escape to return to the main Menu!\nPress Q to quit");
 			clearObjectList();
+			window.draw(gameOverText);
 			window.draw(playerScoreText);
 			returnToMainMenu();
 
