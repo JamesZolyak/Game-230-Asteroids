@@ -7,7 +7,7 @@ class Asteroid : public GameObject
 {
 public:
 
-	Asteroid(RenderWindow* gameWindow, Vector2f asteroidDimensions, int movementAngle);
+	Asteroid(RenderWindow* gameWindow, Vector2f asteroidDimensions, int movementAngle, float radius, Texture* texture);
 	virtual void Update(float dt);
 	virtual void Draw();
 	virtual void HandleCollision(GameObject* collider, Sound* shipExplosion);

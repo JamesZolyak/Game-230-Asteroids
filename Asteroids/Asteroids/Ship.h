@@ -13,7 +13,7 @@ public:
 	int lives;
 	Sound shipMovement;
 
-	Ship(RenderWindow* gameWindow, Vector2f dimensions, Sound* shipThruster);
+	Ship(RenderWindow* gameWindow, Vector2f dimensions, Sound* shipThruster, float radius, Texture* texture);
 	virtual void Update(float dt);
 	virtual void Draw();
 	virtual void HandleCollision(GameObject* collider, Sound* shipExplosion);

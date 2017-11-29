@@ -5,7 +5,7 @@ class Bullet : public GameObject
 {
 public:
 
-	Bullet(RenderWindow* gameWindow, Vector2f bulletDimensions, int bulletAngle);
+	Bullet(RenderWindow* gameWindow, Vector2f bulletDimensions, float radius, int bulletAngle);
 	virtual void Update(float dt);
 	virtual void Draw();
 	virtual void HandleCollision(GameObject* collider, Sound* shipExplosion);

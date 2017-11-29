@@ -2,7 +2,7 @@
 
 
 
-Bullet::Bullet(RenderWindow* gameWindow, Vector2f bulletDimensions, int bulletAngle)
+Bullet::Bullet(RenderWindow* gameWindow, Vector2f bulletDimensions, float radius, int bulletAngle)
 {
 	window = gameWindow;
 	speed = 400;
@@ -13,6 +13,9 @@ Bullet::Bullet(RenderWindow* gameWindow, Vector2f bulletDimensions, int bulletAn
 	shape.setSize(dimensions - sf::Vector2f(3, 3));
 	shape.setFillColor(sf::Color::Red);
 	shape.setOrigin(dimensions / 2.f);
+	circle.setRadius(radius);
+	circle.setFillColor(sf::Color::Red);
+	circle.setOrigin(dimensions / 2.f);
 	//shape.setRotation(90);
 	deleteNextCycle = false;
 }
@@ -24,11 +27,13 @@ void Bullet::Update(float dt)
 
 	position = position - velocity;
 	shape.setPosition(position);
+	circle.setPosition(position);
 }
 
 void Bullet::Draw()
 {
-	window->draw(shape);
+	//window->draw(shape);
+	window->draw(circle);
 }
 
 void Bullet::HandleCollision(GameObject* collider, Sound* shipExplosion)

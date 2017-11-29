@@ -9,10 +9,76 @@
 #include "Ship.h"
 #include "Asteroid.h"
 #include "Bullet.h"
+#include "SFML\Effect.hpp"
 
 using namespace sf;
 using namespace std;
 
+class StormBlink : public Effect
+{
+public:
+	VertexArray m_points;
+	Shader m_shader;
+	vector<int> angles;
+	StormBlink() :
+		Effect("storm + blink")
+	{
+	}
+
+	bool onLoad()
+	{
+		// Create the points
+		m_points.setPrimitiveType(sf::Points);
+		for (int i = 0; i < 300; ++i)
+		{
+			float x = static_cast<float>(std::rand() % 200);
+			float y = static_cast<float>(std::rand() % 200);
+			sf::Uint8 r = std::rand() % 255;
+			sf::Uint8 g = std::rand() % 255;
+			sf::Uint8 b = std::rand() % 255;
+			m_points.append(sf::Vertex(sf::Vector2f(x, y), sf::Color(r, g, b)));
+			angles.push_back(rand() % 361);
+		}
+
+		// Load the shader
+		if (!m_shader.loadFromFile("storm.vert", Shader::Type::Vertex ))
+			return false;
+
+		return true;
+	}
+
+	void onUpdate(float time, float x, float y)
+	{
+		float radius = 5 + std::cos(time) * 10;
+		m_shader.setUniform("storm_position", sf::Vector2f(x * 5, y * 5));
+		m_shader.setUniform("storm_inner_radius", radius / 3);
+		m_shader.setUniform("storm_total_radius", radius);
+		for (int i = 0; i < 300; ++i)
+		{
+			float tempY = sin(angles[i]) * time * (rand() % 55+32);
+			float tempX = cos(angles[i])* time * (rand() % 55 + 32);
+
+			m_points[i].position = m_points[i].position - Vector2f(tempX, tempY);
+			//m_points[i].position.x += 1;
+		}
+		//m_shader.setUniform("blink_alpha", 0.5f + std::cos(time * 3) * 0.25f);
+	}
+
+	void startPoints(Vector2f positionStart)
+	{
+		for (int i = 0; i < 300; ++i)
+		{
+			m_points[i].position = positionStart;
+		}
+	}
+
+	void onDraw(sf::RenderTarget& target, sf::RenderStates states) const
+	{
+		states.shader = &m_shader;
+		target.draw(m_points, states);
+	}
+	
+};
 const int gameWidth = 1000;
 const int gameHeight = 1000;
 const float BUCKET_WIDTH = 100;
@@ -35,6 +101,7 @@ int bigAsteroidCount = startingBigAsteroidCount;
 int startingAsteroidLevel;
 int asteroidTrackerCount = 0;
 const int bigAsteroidSize = 80;
+const int bigAsteroidRadius = 60;
 int bigAsteroidSpeedIncrement = 0;
 bool ignoreFirstFrame = true;
 
@@ -57,6 +124,14 @@ SoundBuffer asteroidHitBuffer;
 Sound newLevel;
 SoundBuffer newLevelBuffer;
 
+Texture shipTexture;
+Texture asteroidTexture;
+
+Clock gameClock;
+StormBlink storm;
+float drawShaderCount = 0;
+Vector2f explosionPosition;
+
 void addGameObject(GameObject* obj)
 {
 	objects.push_back(obj);
@@ -64,7 +139,11 @@ void addGameObject(GameObject* obj)
 	buckets[i].push_back(obj);
 }
 
-void loadSounds()
+float length(Vector2f v) {
+	return sqrt(v.x * v.x + v.y * v.y);
+}
+
+void loadSoundsAndTextures()
 {
 	shipThrusterBuffer.loadFromFile("ShipThruster.wav");
 	shipThruster.setBuffer(shipThrusterBuffer);
@@ -80,6 +159,11 @@ void loadSounds()
 
 	newLevelBuffer.loadFromFile("NewLevel.wav");
 	newLevel.setBuffer(newLevelBuffer);
+
+	shipTexture.loadFromFile("nightraiderfixed.png");
+	asteroidTexture.loadFromFile("AsteroidHuge.png");
+
+	storm.load();
 }
 
 void setStartingAsteroidLevel()
@@ -132,7 +216,6 @@ void bucket_add(Vector2i b, GameObject* obj)
 void bucket_remove(Vector2i b, GameObject* obj)
 {
 	vector<GameObject*> & v = grid[b.x][ b.y];
-
 	for (int i = 0; i < v.size(); ++i)
 	{
 		if (v[i] == obj)
@@ -158,7 +241,22 @@ void detect_collisions(GameObject* obj, Vector2i b)
 			for (GameObject* o : v)
 			{
 				if (o != obj)
-					obj->HandleCollision(o, &shipExplosion);
+				{
+					float d = length(obj->circle.getPosition() - o->circle.getPosition());
+					float sum = obj->circle.getRadius() + o->circle.getRadius();
+
+					if (d < sum)
+					{
+						obj->HandleCollision(o, &shipExplosion);
+						if (obj->gameObjectType != o->gameObjectType)
+						{
+							explosionPosition = obj->position;
+
+							drawShaderCount = 2;
+							storm.startPoints(obj->position);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -212,8 +310,8 @@ void handleFiring()
 	if (Keyboard::isKeyPressed(Keyboard::Space) && fireLimiter >= 0.25f && currentState == GameState::inGame)
 	{
 		fireLimiter = 0;
-		Bullet* bullet = new Bullet(&window, Vector2f(20, 5), player->shape.getRotation());
-		bullet->position = player->shape.getPosition();
+		Bullet* bullet = new Bullet(&window, Vector2f(20, 5), 5, player->circle.getRotation());
+		bullet->position = player->circle.getPosition();
 		addGameObject(bullet);
 		shipFire.play();
 	}
@@ -239,8 +337,8 @@ void handleDeleteCycle()
 				int angle2 = rand() % 361;
 				Vector2f tempPosition1 = Vector2f(tempX + 75, tempY + 75);
 				Vector2f tempPosition2 = Vector2f(tempX - 75, tempY - 75);
-				Asteroid* temp1 = new Asteroid(&window, Vector2f(objects[i]->shape.getSize().x / 2, objects[i]->shape.getSize().y / 2), angle1);
-				Asteroid* temp2 = new Asteroid(&window, Vector2f(objects[i]->shape.getSize().x / 2, objects[i]->shape.getSize().y / 2), angle2);
+				Asteroid* temp1 = new Asteroid(&window, Vector2f(objects[i]->shape.getSize().x / 2, objects[i]->shape.getSize().y / 2), angle1, objects[i]->circle.getRadius() / 2, &asteroidTexture);
+				Asteroid* temp2 = new Asteroid(&window, Vector2f(objects[i]->shape.getSize().x / 2, objects[i]->shape.getSize().y / 2), angle2, objects[i]->circle.getRadius() / 2, &asteroidTexture);
 				temp1->position = tempPosition1;
 				temp2->position = tempPosition2;
 				if (objects[i]->gameObjectSize == GameObject::Size::large)
@@ -270,11 +368,13 @@ void handleDeleteCycle()
 				}
 				asteroidHit.play();
 				asteroidTrackerCount++;
-
+				
+				delete objects[i];
 				objects.erase(objects.begin() + i);
 			}
 			else if (objects[i]->gameObjectType == GameObject::Type::bullet)
 			{
+				delete objects[i];
 				objects.erase(objects.begin() + i);
 			}
 		}
@@ -292,7 +392,7 @@ void generateLevel()
 		int angle = rand() % 361;
 		int xPosition = rand() % (gameWidth + 1);
 		int yPosition = rand() % (gameHeight + 1);
-		Asteroid* temp = new Asteroid(&window, Vector2f(bigAsteroidSize, bigAsteroidSize), angle);
+		Asteroid* temp = new Asteroid(&window, Vector2f(bigAsteroidSize, bigAsteroidSize), angle, bigAsteroidRadius, &asteroidTexture);
 		temp->position = Vector2f(xPosition, yPosition);
 		temp->speed += bigAsteroidSpeedIncrement;
 		addGameObject(temp);
@@ -303,7 +403,7 @@ void startGame()
 {
 	if (Keyboard::isKeyPressed(Keyboard::Space))
 	{
-		player = new Ship(&window, Vector2f(30, 12.5), &shipThruster);
+		player = new Ship(&window, Vector2f(30, 12.5), &shipThruster, 20, &shipTexture);
 		player->position = Vector2f(gameWidth/2, gameHeight/2);
 		addGameObject(player);
 		generateLevel();
@@ -342,12 +442,11 @@ int main()
 	ignoreFirstFrame = true;
 	std::srand(static_cast<unsigned int>(std::time(NULL)));
 	
-	Clock clock;
 	Font font;
 	if (!font.loadFromFile("calibri.ttf"))
 		return EXIT_FAILURE;
 
-	loadSounds();
+	loadSoundsAndTextures();
 
 	playerLivesText.setFont(font);
 	playerLivesText.setCharacterSize(40);
@@ -364,7 +463,7 @@ int main()
 	{
 		if (!isPlaying)
 		{
-			clock.restart();
+			gameClock.restart();
 			isPlaying = true;
 		}
 
@@ -391,7 +490,7 @@ int main()
 		}
 		else if (currentState == GameState::inGame)
 		{
-			float deltaTime = clock.restart().asSeconds();
+			float deltaTime = gameClock.restart().asSeconds();
 			fireLimiter += deltaTime;
 
 			update_state(deltaTime);
@@ -404,6 +503,13 @@ int main()
 			playerLivesText.setString("Lives: " + to_string(player->lives));
 			window.draw(playerScoreText);
 			window.draw(playerLivesText);
+			if (drawShaderCount > 0)
+			{
+
+				storm.update(deltaTime, explosionPosition.x, explosionPosition.y);
+				drawShaderCount -= deltaTime;
+				window.draw(storm);
+			}
 
 			render_frame();
 			
