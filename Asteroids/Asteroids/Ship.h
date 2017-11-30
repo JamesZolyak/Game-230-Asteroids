@@ -5,7 +5,7 @@ class Ship :
 	public GameObject
 {
 private:
-	const int BeginningSpeed = 200;
+	const int BeginningSpeed = 250;
 	const Vector2f defaultPosition = Vector2f(500, 500);
 
 public:

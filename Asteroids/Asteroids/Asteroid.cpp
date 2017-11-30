@@ -10,16 +10,9 @@ Asteroid::Asteroid(RenderWindow* gameWindow, Vector2f asteroidDimensions, int mo
 	speed = 20;
 	gameObjectType = asteroid;
 	gameObjectSize = large;
-	//shape.setSize(dimensions - sf::Vector2f(3, 3));
-	//shape.setFillColor(sf::Color::White);
-	//shape.setOrigin(dimensions / 2.f);
-	//shape.setRotation(angle);
 	circle.setRadius(radius);
 	circle.setTexture(texture);
-	//circle.setTextureRect(IntRect(circle.getGlobalBounds().left, circle.getGlobalBounds().top, radius * 4, radius * 4));
-	//circle.setFillColor(sf::Color::White);
-	/*circle.setOutlineThickness(2);
-	circle.setOutlineColor(Color::Cyan);*/
+
 	circle.setOrigin(radius / 2.f, radius / 2.f);
 	circle.setRotation(angle);
 	
@@ -33,12 +26,10 @@ void Asteroid::Update(float dt)
 
 	position = position - velocity;
 	circle.setPosition(position);
-	//shape.setPosition(position);
 }
 
 void Asteroid::Draw()
 {
-	//window->draw(shape);
 	window->draw(circle);
 }
 
@@ -66,32 +57,37 @@ void Asteroid::HandleCollision(GameObject* collider, Sound* shipExplosion)
 		int tempAngle2 = atan2f(d.y, -d.x);
 
 		if (this->position.x > collider->position.x)
-		{
-			tempAngle += 90;
-			tempAngle2 -= 90;
+		{			
 			if (this->position.y > collider->position.y)
 			{
+				tempAngle += 90;
+				tempAngle2 -= 90;
 				position = Vector2f(position.x + 5, position.y + 5);
 				collider->position = Vector2f(collider->position.x - 5, collider->position.y - 5);
 			}
 			else if (this->position.y < collider->position.y)
 			{
+				tempAngle += 90;
+				tempAngle2 += 90;
 				position = Vector2f(position.x + 5, position.y - 5);
 				collider->position = Vector2f(collider->position.x - 5, collider->position.y + 5);
 			}
 		}
 		else if (this->position.x < collider->position.x)
 		{
-			tempAngle -= 90;
-			tempAngle2 += 90;
+			
 			if (this->position.y > collider->position.y)
 			{
+				tempAngle -= 90;
+				tempAngle2 -= 90;
 				position = Vector2f(position.x - 5, position.y + 5);
 				collider->position = Vector2f(collider->position.x + 5, collider->position.y - 5);
 
 			}
 			else if (this->position.y < collider->position.y)
 			{
+				tempAngle -= 90;
+				tempAngle2 += 90;
 				position = Vector2f(position.x - 5, position.y - 5);
 				collider->position = Vector2f(collider->position.x + 5, collider->position.y + 5);
 			}

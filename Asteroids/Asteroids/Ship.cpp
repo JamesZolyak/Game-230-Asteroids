@@ -10,19 +10,8 @@ Ship::Ship(RenderWindow* gameWindow, Vector2f shipDimensions, Sound* shipThruste
 	gameObjectType = ship;
 	lives = 3;
 	shipMovement = *shipThruster;
-	//shape.setSize(dimensions - sf::Vector2f(3, 3));
-
-	//shape.setFillColor(sf::Color(100, 100, 200));
-	//shape.setOrigin(dimensions / 2.f);
-	//shape.setPosition(defaultPosition);
-
 	circle.setTexture(texture);
-	//circle.getTexture();
 	circle.setRadius(radius);
-	//circle.setOutlineThickness(3);
-	//circle.setOutlineColor(sf::Color::Red);
-	//circle.setFillColor(sf::Color(100, 100, 200));
-	
 	circle.setOrigin(radius, radius);
 	circle.setPosition(defaultPosition);
 	circle.setRotation(90);
@@ -32,10 +21,10 @@ Ship::Ship(RenderWindow* gameWindow, Vector2f shipDimensions, Sound* shipThruste
 void Ship::Update(float dt)
 {
 	if (Keyboard::isKeyPressed(Keyboard::Left))
-		circle.rotate(-.05);
+		circle.rotate(-.08);
 
 	if (Keyboard::isKeyPressed(Keyboard::Right))
-		circle.rotate(.05);
+		circle.rotate(.08);
 
 	if (Keyboard::isKeyPressed(Keyboard::Up))
 	{
@@ -46,9 +35,14 @@ void Ship::Update(float dt)
 	}
 	if(velocity.x > 0)
 		velocity.x -= .00001;
-	if(velocity.y > 0)
-		velocity.y -=  .00001;
+	else if(velocity.x < 0 )
+		velocity.x += .00001;
+	if (velocity.y > 0)
+		velocity.y -= .00001;
+	else if (velocity.y < 0)
+		velocity.y += .00001;
 	//velocity = Normalize();
+
 	position = position - velocity;
 	circle.setPosition(position);
 }

@@ -55,8 +55,8 @@ public:
 		m_shader.setUniform("storm_total_radius", radius);
 		for (int i = 0; i < 300; ++i)
 		{
-			float tempY = sin(angles[i]) * time * (rand() % 55+32);
-			float tempX = cos(angles[i])* time * (rand() % 55 + 32);
+			float tempY = sin(angles[i]) * time * (rand() % 60+32);
+			float tempX = cos(angles[i])* time * (rand() % 60 + 32);
 
 			m_points[i].position = m_points[i].position - Vector2f(tempX, tempY);
 			//m_points[i].position.x += 1;
@@ -128,9 +128,22 @@ Texture shipTexture;
 Texture asteroidTexture;
 
 Clock gameClock;
-StormBlink storm;
-float drawShaderCount = 0;
-Vector2f explosionPosition;
+StormBlink storm1;
+StormBlink storm2;
+StormBlink storm3;
+StormBlink storm4;
+StormBlink storm5;
+float drawShaderCount1 = 0;
+float drawShaderCount2 = 0;
+float drawShaderCount3 = 0;
+float drawShaderCount4 = 0;
+float drawShaderCount5 = 0;
+Vector2f explosionPosition1;
+Vector2f explosionPosition2;
+Vector2f explosionPosition3;
+Vector2f explosionPosition4;
+Vector2f explosionPosition5;
+const float shaderTimeLength = 1.5f;
 
 void addGameObject(GameObject* obj)
 {
@@ -163,7 +176,11 @@ void loadSoundsAndTextures()
 	shipTexture.loadFromFile("nightraiderfixed.png");
 	asteroidTexture.loadFromFile("AsteroidHuge.png");
 
-	storm.load();
+	storm1.load();
+	storm2.load();
+	storm3.load();
+	storm4.load();
+	storm5.load();
 }
 
 void setStartingAsteroidLevel()
@@ -248,12 +265,38 @@ void detect_collisions(GameObject* obj, Vector2i b)
 					if (d < sum)
 					{
 						obj->HandleCollision(o, &shipExplosion);
-						if (obj->gameObjectType != o->gameObjectType)
+						if (obj->gameObjectType != o->gameObjectType && obj->gameObjectType == GameObject::Type::asteroid)
 						{
-							explosionPosition = obj->position;
-
-							drawShaderCount = 2;
-							storm.startPoints(obj->position);
+							if (drawShaderCount1 <= 0)
+							{
+								drawShaderCount1 = shaderTimeLength;
+								storm1.startPoints(obj->position);
+								explosionPosition1 = obj->position;
+							}
+							else if (drawShaderCount2 <= 0)
+							{
+								drawShaderCount2 = shaderTimeLength;
+								storm2.startPoints(obj->position);
+								explosionPosition2 = obj->position;
+							}
+							else if (drawShaderCount3 <= 0)
+							{
+								drawShaderCount3 = shaderTimeLength;
+								storm3.startPoints(obj->position);
+								explosionPosition3 = obj->position;
+							}
+							else if (drawShaderCount4 <= 0)
+							{
+								drawShaderCount4 = shaderTimeLength;
+								storm4.startPoints(obj->position);
+								explosionPosition4 = obj->position;
+							}
+							else if (drawShaderCount5 <= 0)
+							{
+								drawShaderCount5 = shaderTimeLength;
+								storm5.startPoints(obj->position);
+								explosionPosition5 = obj->position;
+							}
 						}
 					}
 				}
@@ -387,6 +430,15 @@ void generateLevel()
 	bigAsteroidCount += 1;
 	setStartingAsteroidLevel();
 	bigAsteroidSpeedIncrement += 20;
+	for (int i = 0; i < objects.size(); ++i)
+	{
+		if (objects[i]->gameObjectType == GameObject::Type::bullet)
+		{
+			delete objects[i];
+			objects[i] = nullptr;
+			objects.erase(objects.begin() + i);
+		}
+	}
 	for (int i = 0; i < bigAsteroidCount; ++i)
 	{
 		int angle = rand() % 361;
@@ -503,12 +555,40 @@ int main()
 			playerLivesText.setString("Lives: " + to_string(player->lives));
 			window.draw(playerScoreText);
 			window.draw(playerLivesText);
-			if (drawShaderCount > 0)
+			if (drawShaderCount1 > 0)
 			{
 
-				storm.update(deltaTime, explosionPosition.x, explosionPosition.y);
-				drawShaderCount -= deltaTime;
-				window.draw(storm);
+				storm1.update(deltaTime, explosionPosition1.x, explosionPosition1.y);
+				drawShaderCount1 -= deltaTime;
+				window.draw(storm1);
+			}
+			if (drawShaderCount2 > 0)
+			{
+
+				storm2.update(deltaTime, explosionPosition2.x, explosionPosition2.y);
+				drawShaderCount2 -= deltaTime;
+				window.draw(storm2);
+			}
+			if (drawShaderCount3 > 0)
+			{
+
+				storm3.update(deltaTime, explosionPosition3.x, explosionPosition3.y);
+				drawShaderCount3 -= deltaTime;
+				window.draw(storm3);
+			}
+			if (drawShaderCount4 > 0)
+			{
+
+				storm4.update(deltaTime, explosionPosition4.x, explosionPosition4.y);
+				drawShaderCount4 -= deltaTime;
+				window.draw(storm4);
+			}
+			if (drawShaderCount5 > 0)
+			{
+
+				storm5.update(deltaTime, explosionPosition5.x, explosionPosition5.y);
+				drawShaderCount5 -= deltaTime;
+				window.draw(storm5);
 			}
 
 			render_frame();
